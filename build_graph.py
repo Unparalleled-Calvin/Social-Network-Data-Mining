@@ -128,7 +128,7 @@ class DataLoader:
 
         music_comments = self.load_music_comments()
         for index, row in music_comments.iterrows():
-            graph.add_edge(user_node(row["user_id"]), music_node(row["music_id"]), timestamp=row["timestamp"], liked_count=row["liked_count"])
+            graph.add_edge(user_node(row["user_id"]), music_node(row["music_id"]), timestamp=row["timestamp"], liked_count=row["liked_count"], type="like")
         del music_comments
 
         if save_file:
