@@ -22,6 +22,7 @@ def eg2nx(G, class_=nx.Graph):
     for u, v, attr in G.edges:
         G_.add_edge(u, v, **attr)
     return G_
+
 class DataLoader:
     def __init__(self, file_names=file_names, root_path="./Netease_music_social"):
         self.file_paths = {
@@ -76,6 +77,7 @@ class DataLoader:
                 print(f"try to load graph from file {file_name} ...")
                 G = eg.read_pickle(file_name)
                 assert(isinstance(G, class_))
+                print(f"ok")
                 return G
             except:
                 print(f"fail to load {file_name}")
@@ -134,36 +136,82 @@ class DataLoader:
         if save_file:
             eg.write_pickle(file_name, graph)
 
+        print(f"ok")
         return graph
 
+    def load_social_subgraph(self, use_file=True, save_file=True, file_name="social_subgraph.pkl", class_=eg.DiGraph):
+        if use_file:
+            try:
+                print(f"try to load graph from file {file_name} ...")
+                G = eg.read_pickle(file_name)
+                assert(isinstance(G, class_))
+                print(f"ok")
+                return G
+            except:
+                print(f"fail to load {file_name}")
+        
+        print("build now ...")
+
+        graph = self.load_graph(use_file=use_file, save_file=save_file, class_=class_)
+        nodes = []
+        for u, attr in graph.nodes.items():
+            if attr["type"] == "user":
+                nodes.append(u)
+        subgraph = graph.nodes_subgraph(nodes)
+
+        if save_file:
+            eg.write_pickle(file_name, subgraph)
+        
+        print("ok")
+        return subgraph
+
+
 class Sampler:
-    def __init__(self, graph: eg.Graph):
+    def __init__(self, graph: eg.DiGraph):
         self.graph = graph
     
-    def random_node(self, ratio = 0.01, max_num = 1500, min_num = 0, save_file = True, file_name = "subgraph.gexf"): # 随机抽样
-        nodes = list(self.graph.nodes)
-        num = max(min(int(ratio * len(nodes)), max_num), min_num)
-        sample = nodes[:num]
-        random.shuffle(sample)
-        subgraph = self.graph.nodes_subgraph(from_nodes=sample)
-        if save_file:
-            eg.write_gexf(subgraph, file_name)
-        return subgraph
+    # def random_node(self, ratio = 0.01, max_num = 500, min_num = 0, save_file = True, file_name = "subgraph.gexf"): # 随机抽样
+    #     nodes = list(self.graph.nodes)
+    #     num = max(min(int(ratio * len(nodes)), max_num), min_num)
+    #     sample = nodes[:num]
+    #     random.shuffle(sample)
+    #     subgraph = self.graph.nodes_subgraph(from_nodes=sample)
+    #     if save_file:
+    #         eg.write_gexf(subgraph, file_name)
+    #     return subgraph
         
-    def diffusion(self, ratio = 0.01, max_num = 1500, min_num = 0, save_file = True, file_name = "subgraph.gexf"): # diffusion
+    def sample(self, sampler_class, ratio = 0.01, max_num = 500, min_num = 0, save_file = True, file_name = False):
         num = max(min(int(ratio * len(self.graph.nodes)), max_num), min_num)
-        from littleballoffur import DiffusionSampler
-        sampler = DiffusionSampler(number_of_nodes=num)
+        print(f"start to sample with {sampler_class.__name__}, {num} nodes in total")
+        sampler = sampler_class(number_of_nodes=num)
         G_, index_of_node, node_of_index = self.graph.to_index_node_graph()
         subgraph_ = sampler.sample(eg2nx(G_, nx.Graph))
         nodes = [node_of_index[i] for i in subgraph_.nodes]
         subgraph = self.graph.nodes_subgraph(nodes)
         if save_file:
+            if not file_name:
+                file_name = f"{sampler_class.__name__}_subgraph.gexf"
             eg.write_gexf(subgraph, file_name)
         return subgraph
+    
+    def diffusion(self, ratio = 0.01, max_num = 500, min_num = 0, save_file = True, file_name = False): # diffusion
+        from littleballoffur import DiffusionSampler
+        return self.sample(DiffusionSampler, ratio=ratio, max_num=max_num, min_num=min_num, save_file=save_file, file_name=file_name)
+
+    def diffusion_tree(self, ratio = 0.01, max_num = 500, min_num = 0, save_file = True, file_name = False): # diffusion tree
+        from littleballoffur import DiffusionTreeSampler
+        return self.sample(DiffusionTreeSampler, ratio=ratio, max_num=max_num, min_num=min_num, save_file=save_file, file_name=file_name)
+
+    def forest_fire(self, ratio = 0.01, max_num = 500, min_num = 0, save_file = True, file_name = False):
+        from littleballoffur import ForestFireSampler
+        return self.sample(ForestFireSampler, ratio=ratio, max_num=max_num, min_num=min_num, save_file=save_file, file_name=file_name)
+
+    def common_neighbor_aware_random_walk(self, ratio = 0.01, max_num = 500, min_num = 0, save_file = True, file_name = False):
+        from littleballoffur import CommonNeighborAwareRandomWalkSampler
+        return self.sample(CommonNeighborAwareRandomWalkSampler, ratio=ratio, max_num=max_num, min_num=min_num, save_file=save_file, file_name=file_name)
 
 if __name__ == "__main__":
     loader = DataLoader()
-    graph = loader.load_graph(class_=eg.DiGraph)
+    graph = loader.load_social_subgraph(class_=eg.DiGraph)
     sampler = Sampler(graph)
-    sampler.diffusion()
+    sampler.common_neighbor_aware_random_walk(ratio = 1, max_num = 10000)
