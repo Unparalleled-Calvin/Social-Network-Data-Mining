@@ -15,7 +15,7 @@ file_names = {
     "music_comments": "music_comments.csv",
 }
 
-def eg2nx(G, class_=nx.Graph):
+def class_transform(G, class_=nx.Graph):
     G_ = class_()
     for u, attr in G.nodes.items():
         G_.add_node(u, **attr)
@@ -185,7 +185,7 @@ class Sampler:
         print(f"start to sample with {sampler_class.__name__}, {num} nodes in total")
         sampler = sampler_class(number_of_nodes=num)
         G_, index_of_node, node_of_index = self.graph.to_index_node_graph()
-        subgraph_ = sampler.sample(eg2nx(G_, nx.Graph))
+        subgraph_ = sampler.sample(class_transform(G_, nx.Graph))
         nodes = [node_of_index[i] for i in subgraph_.nodes]
         subgraph = self.graph.nodes_subgraph(nodes)
         if save_file:
@@ -213,5 +213,6 @@ class Sampler:
 if __name__ == "__main__":
     loader = DataLoader()
     graph = loader.load_social_subgraph(class_=eg.DiGraph)
-    sampler = Sampler(graph)
-    sampler.common_neighbor_aware_random_walk(ratio = 1, max_num = 10000)
+    # graph = graph.ego_subgraph("user_9003")
+    # sampler = Sampler(graph)
+    # sampler.common_neighbor_aware_random_walk(ratio = 1, max_num = 10000)
