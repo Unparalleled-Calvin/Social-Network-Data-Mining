@@ -1,7 +1,9 @@
+import easygraph as eg
 import networkx as nx
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.metrics import (accuracy_score, f1_score, precision_score,
+                             recall_score)
 
 
 def class_transform(G, class_=nx.Graph):
@@ -26,3 +28,5 @@ def metrics(y, y_pred, verbose=True):
         print('Recall: %.2f%%'%(recall * 100.0))
         print('F1-score: %.2f%%'%(f1 * 100.0))
     return accuracy, precision, recall, f1
+
+test_graph = eg.get_graph_karateclub()

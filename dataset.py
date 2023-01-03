@@ -58,7 +58,7 @@ class DataLoader:
         dtypes = {"music_id": object, "user_id": np.int64, "timestamp": np.int64, "comment_id": np.int64, "liked_count": np.int64}
         return pd.read_csv(file_path, dtype=dtypes)
 
-    def load_graph(self, use_file=True, save_file=True, file_name="graph.pkl", class_=eg.DiGraph):
+    def load_graph(self, use_file=True, save_file=True, file_name="graph.pkl", class_=eg.Graph):
         def user_node(user_id):
             return f"user_{user_id}"
 
@@ -132,7 +132,7 @@ class DataLoader:
         print(f"ok")
         return graph
 
-    def load_social_subgraph(self, use_file=True, save_file=True, file_name="social_subgraph.pkl", class_=eg.DiGraph):
+    def load_social_subgraph(self, use_file=True, save_file=True, file_name="social_subgraph.pkl", class_=eg.Graph):
         if use_file:
             try:
                 print(f"try to load graph from file {file_name} ...")

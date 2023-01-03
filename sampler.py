@@ -5,7 +5,7 @@ from toolset import class_transform
 
 
 class Sampler:
-    def __init__(self, graph: eg.DiGraph):
+    def __init__(self, graph: eg.Graph):
         self.graph = graph
         
     def sample(self, sampler_class, ratio = 0.01, max_num = 500, min_num = 0, save_file = True, file_name = False):
