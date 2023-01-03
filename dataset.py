@@ -166,14 +166,11 @@ class DataSet:
         self.graph, self.index_of_node, self.node_of_index = graph.to_index_node_graph()
     
     def gen_postive_label(self, num): # 目标：拿到u,v,label
-        music_comments = self.loader.load_music_comments()
-        num = min(num, music_comments.shape[0])
-        music_comments = music_comments.sort_values(by=["timestamp"], ascending=True) #根据时间排序
-        sample_indice = sorted(random.sample(range(music_comments.shape[0]), num)) #抽取子集的index
-        sample = music_comments.iloc[sample_indice]
-        music_indice = sample.loc[:, ["music_id"]].applymap(lambda x: self.index_of_node["music_" + str(x)])
-        user_indice = sample.loc[:, ["user_id"]].applymap(lambda x: self.index_of_node["user_" + str(x)])
-        data = pd.concat([music_indice, user_indice], axis=1)
+        like_edges = filter(lambda edge: edge[2]["type"] == "like", self.graph.edges)
+        like_edges = [(i, j) if self.graph.nodes[i]["type"] == "user" else (j, i) for i, j, _ in like_edges]
+        num = min(num, len(like_edges))
+        data = random.sample(like_edges, num)
+        data = pd.DataFrame(data, columns=["user_id", "music_id"])
         data.loc[:, ["label"]] = 1
         return data
 
