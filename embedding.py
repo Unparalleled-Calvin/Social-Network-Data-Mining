@@ -52,3 +52,11 @@ def node2vec(G, dimensions=16, workers=8, filename="node2vec.csv", model_filenam
     finally:
         data = data.sort_index()
         return data
+
+def gen_embedding(G):
+    bet_cen = betweenness_centrality(G)
+    cons = constraint(G)
+    hier = hierarchy(G)
+    node = node2vec(G)
+    data = pd.concat((bet_cen, cons, hier, node), axis=1)
+    return data
