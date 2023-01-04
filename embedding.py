@@ -7,6 +7,7 @@ from node2vec import Node2Vec
 
 from toolset import class_transform
 
+emb_list = ['bet_cen', 'cons', 'hier', 'node']
 
 def betweenness_centrality(G, filename="between.pkl", n_workers=None):
     try:
@@ -53,10 +54,27 @@ def node2vec(G, dimensions=16, workers=8, filename="node2vec.csv", model_filenam
         data = data.sort_index()
         return data
 
-def gen_embedding(G):
+def node_attr(G):
+    data = []
+    for node in G.nodes:
+        try:
+            comment_num = G.nodes[node]["comment_num"]
+        except:
+            comment_num = 0
+        data.append((node, comment_num))
+    data = pd.DataFrame(data, columns=["id", "attr"])
+    data.set_index(["id"], inplace=True)
+    return data
+
+def gen_embedding(G, drop_index=None):
     bet_cen = betweenness_centrality(G)
     cons = constraint(G)
     hier = hierarchy(G)
     node = node2vec(G)
-    data = pd.concat((bet_cen, cons, hier, node), axis=1)
+    # attr = node_attr(G)
+    embeds = [bet_cen, cons, hier, node]
+    if drop_index != None:
+        print(f"drop {emb_list[drop_index]}")
+        embeds.pop(drop_index)
+    data = pd.concat(embeds, axis=1)
     return data

@@ -1,9 +1,19 @@
+from lightgbm import LGBMClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
+from xgboost import XGBClassifier
 
 from dataset import DataLoader, DataSet
 from embedding import gen_embedding
 from toolset import metrics
+
+
+def train(model, X_train, X_test, y_train, y_test):
+    print(f"{model.__class__}:")
+    model.fit(X_train, y_train)
+
+    y_pred = model.predict(X_test)
+    metrics(y_test, y_pred)
 
 if __name__ == "__main__":
     loader = DataLoader()
@@ -13,8 +23,13 @@ if __name__ == "__main__":
     X, y = data.iloc[:, :-3], data.iloc[:, -1]
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33)
 
-    model = DecisionTreeClassifier()
-    model.fit(X_train, y_train)
+    models = [
+        DecisionTreeClassifier(),
+        XGBClassifier(),
+        LGBMClassifier()
+    ]
 
-    y_pred = model.predict(X_test)
-    metrics(y_test, y_pred)
+    for model in models:
+        train(model, X_train, X_test, y_train, y_test)
+        print()
+    

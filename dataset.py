@@ -165,7 +165,7 @@ class DataSet:
         graph = loader.load_graph()
         self.graph, self.index_of_node, self.node_of_index = graph.to_index_node_graph()
     
-    def gen_postive_label(self, num): # 目标：拿到u,v,label
+    def gen_postive_label(self, num): # 目标：拿到u, v, label
         like_edges = filter(lambda edge: edge[2]["type"] == "like", self.graph.edges)
         like_edges = [(i, j) if self.graph.nodes[i]["type"] == "user" else (j, i) for i, j, _ in like_edges]
         num = min(num, len(like_edges))
@@ -188,11 +188,15 @@ class DataSet:
         data.loc[:, ["label"]] = 0
         return data
 
-    def gen_training_data(self, embedding, num=10000, ratio=0.5): #ratio是正负例比重，embedding格式为Dataframe，索引为id
-        pos = self.gen_postive_label(int(num * ratio))
-        neg = self.gen_negative_label(num - int(num * ratio))
-        labels = pd.concat((pos, neg), axis=0)
-        labels.reset_index(drop=True, inplace=True)
+    def gen_training_data(self, embedding, num=10000, ratio=0.5, label_filename="label.csv"): #ratio是正负例比重，embedding格式为Dataframe，索引为id
+        try:
+            labels = pd.read_csv(label_filename, header=0, index_col=0)
+        except:
+            pos = self.gen_postive_label(int(num * ratio))
+            neg = self.gen_negative_label(num - int(num * ratio))
+            labels = pd.concat((pos, neg), axis=0)
+            labels.reset_index(drop=True, inplace=True)
+            labels.to_csv(label_filename)
         data = [embedding.loc[row["music_id"]].to_list() +  embedding.loc[row["user_id"]].to_list() for _, row in labels.iterrows()]
         data = pd.DataFrame(data)
         return pd.concat((data, labels), axis=1) #这里还保留着node号
